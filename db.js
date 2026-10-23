@@ -4,7 +4,19 @@ const os = require('node:os');
 const { Pool } = require('pg');
 
 const isVercel = Boolean(process.env.VERCEL || process.env.NOW_REGION);
-const databaseUrl = process.env.DATABASE_URL || process.env.POSTGRES_URL;
+let databaseUrl = process.env.DATABASE_URL ||
+  process.env.POSTGRES_URL ||
+  process.env.POSTGRES_PRISMA_URL ||
+  process.env.POSTGRES_URL_NON_POOLING;
+
+if (!databaseUrl && process.env.POSTGRES_HOST && process.env.POSTGRES_USER) {
+  const user = encodeURIComponent(process.env.POSTGRES_USER);
+  const password = encodeURIComponent(process.env.POSTGRES_PASSWORD || '');
+  const host = process.env.POSTGRES_HOST;
+  const port = process.env.POSTGRES_PORT || 5432;
+  const database = process.env.POSTGRES_DATABASE || 'postgres';
+  databaseUrl = `postgresql://${user}:${password}@${host}:${port}/${database}?sslmode=require`;
+}
 
 const DEFAULT_CATEGORIES = [
   {
