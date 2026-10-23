@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>iCAN Income Expense App - จัดการรายรับ-รายจ่าย & สแกนสลิปอัจฉริยะ</title>
+  <meta name="description" content="iCAN Income Expense App แอปบันทึกรายรับ-รายจ่าย สแกนสลิปอัตโนมัติ รู้นิสัยใช้จ่าย รู้สถานะการเงิน และวิเคราะห์สุขภาพทางการเงินในสไตล์ Modern Blue" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+
+  <!-- Google Fonts: Prompt -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Tesseract.js for Free Local Thai+English OCR -->
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <!-- Modern Top Navigation Bar -->
+  <header class="topbar">
+    <div class="container topbar-inner">
+      <div class="brand">
+        <a href="/" class="brand-link" title="iCAN Income Expense App">
+          <div class="brand-logo-wrap">
+            <img src="/favicon.svg" alt="iCAN Logo Icon" class="brand-logo-img" />
+          </div>
+          <div class="brand-text">
+            <div class="brand-title-row">
+              <span class="brand-title-i">i</span><span class="brand-title-can">CAN</span>
+              <span class="brand-badge-pro">PRO</span>
+            </div>
+            <p class="brand-subtitle">Income Expense App</p>
+          </div>
+        </a>
+      </div>
+
+      <div class="topbar-actions">
+        <!-- Month Filter -->
+        <div class="month-picker-wrap">
+          <label for="monthFilter" class="sr-only">เลือกเดือน</label>
+          <select id="monthFilter" class="select-pill"></select>
+        </div>
+
+        <!-- Net Worth Button -->
+        <button id="btnOpenNetWorthModal" class="btn btn-outline" title="อัปเดตสินทรัพย์และหนี้สิน">
+          🏛️ สถานะการเงิน
+        </button>
+
+        <!-- Category & AI Settings Button -->
+        <button id="btnManageRules" class="btn btn-outline" title="ตั้งค่าคำค้นหาหมวดหมู่และ AI">
+          ⚙️ หมวดหมู่ / AI
+        </button>
+
+        <!-- Export CSV Button -->
+        <button id="btnExportCsv" class="btn btn-primary" title="ส่งออกไฟล์ CSV">
+          📥 Export CSV
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Hero Section: Modern Blue Theme Showcase inspired by SET Happy Money -->
+  <section class="hero-section">
+    <div class="container">
+      <div class="hero-content">
+        <div class="hero-brand-card">
+          <div class="hero-logo-large">
+            <img src="/favicon.svg" alt="iCAN Logo" />
+          </div>
+          <div class="hero-text-block">
+            <div class="hero-badge-tag">💙 Modern Blue Personal Finance</div>
+            <h1 class="hero-title">iCAN Income Expense App</h1>
+            <p class="hero-desc">
+              แอปบันทึกรายรับ-รายจ่ายอัจฉริยะ แนบสลิปแยกหมวดหมู่อัตโนมัติ รู้นิสัยใช้จ่าย รู้สถานะการเงิน และตรวจสุขภาพทางการเงินของคุณ
+            </p>
+            <div class="hero-meta-row">
+              <div class="meta-star-rating">
+                <span class="stars">★★★★★</span>
+                <span class="rating-text">4.9 (SET Happy Money Style)</span>
+              </div>
+              <span class="meta-divider">•</span>
+              <span class="meta-feature">⚡ OCR ภาษาไทย & AI</span>
+              <span class="meta-divider">•</span>
+              <span class="meta-feature">🔒 ข้อมูลปลอดภัยในเครื่อง</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 4 Core Pillars (SET Happy Money Inspired Cards) -->
+      <div class="pillars-grid" aria-label="4 เสาหลักการวางแผนการเงิน">
+        
+        <!-- Pillar 1: รู้นิสัยใช้จ่าย -->
+        <div class="pillar-card">
+          <div class="pillar-card-header">
+            <span class="pillar-step-badge">1</span>
+            <div>
+              <h3 class="pillar-title">รู้นิสัยใช้จ่าย</h3>
+              <p class="pillar-subtitle">ดูประวัติการใช้จ่ายย้อนหลังได้ ทั้งแบบรายวัน รายเดือน และรายปี</p>
+            </div>
+          </div>
+
+          <div class="phone-mockup">
+            <div class="phone-screen">
+              <div class="phone-screen-header">
+                <span>รายได้ - ค่าใช้จ่าย</span>
+                <span class="phone-header-date" id="phoneDateLabel">วันนี้</span>
+              </div>
+
+              <!-- Dark Navy Summary Card -->
+              <div class="phone-dark-card">
+                <div class="phone-dark-label">คงเหลือสุทธิ</div>
+                <div class="phone-dark-val" id="pillarBalance">฿0.00</div>
+                <div class="phone-dark-subgrid">
+                  <div>
+                    <span class="phone-sub-lbl">รายรับ</span>
+                    <strong class="phone-sub-val text-income" id="pillarIncome">฿0.00</strong>
+                  </div>
+                  <div class="divider-v"></div>
+                  <div>
+                    <span class="phone-sub-lbl">ค่าใช้จ่าย</span>
+                    <strong class="phone-sub-val text-expense" id="pillarExpense">฿0.00</strong>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Daily Spending Gauge -->
+              <div class="daily-gauge-box">
+                <div class="gauge-ring-wrap">
+                  <svg class="gauge-ring-svg" viewBox="0 0 100 100">
+                    <circle class="gauge-ring-bg" cx="50" cy="50" r="42" />
+                    <circle class="gauge-ring-fill" id="dailyGaugeFill" cx="50" cy="50" r="42" />
+                  </svg>
+                  <div class="gauge-ring-center">
+                    <span class="gauge-center-lbl">ค่าใช้จ่ายวันนี้</span>
+                    <strong class="gauge-center-amount" id="pillarTodayExpense">฿0</strong>
+                    <span class="gauge-center-unit">บาท</span>
+                  </div>
+                </div>
+                <div class="daily-target-pill" id="btnEditDailyTarget" title="คลิกเพื่อแก้ไขเป้าหมายรายวัน">
+                  <span>เป้าหมาย</span>
+                  <strong id="pillarDailyTarget">฿300</strong>
+                  <span>/ วัน ✏️</span>
+                </div>
+                <span id="pillarDailyStatus" class="gauge-status-tag tag-safe">อยู่ในงบประมาณ</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Pillar 2: วางแผนปรับลดค่าใช้จ่าย -->
+        <div class="pillar-card">
+          <div class="pillar-card-header">
+            <span class="pillar-step-badge">2</span>
+            <div>
+              <h3 class="pillar-title">วางแผนปรับลดค่าใช้จ่าย</h3>
+              <p class="pillar-subtitle">จัดแบ่งหมวดหมู่อย่างชัดเจน เลือกไอคอน เพิ่มหมวดหมู่ได้ตามต้องการ</p>
+            </div>
+          </div>
+
+          <div class="phone-mockup">
+            <div class="phone-screen">
+              <div class="phone-screen-header">
+                <span>เลือกหมวดหมู่</span>
+                <span class="phone-star-icon">⭐</span>
+              </div>
+
+              <!-- Quick Category Grid -->
+              <div class="pillar-cat-grid" id="pillarCatGrid">
+                <!-- Dynamically rendered or static icons preview -->
+                <div class="pcat-item"><span class="pcat-icon">🍜</span><span class="pcat-name">อาหาร</span></div>
+                <div class="pcat-item"><span class="pcat-icon">🚗</span><span class="pcat-name">เดินทาง</span></div>
+                <div class="pcat-item"><span class="pcat-icon">🛍️</span><span class="pcat-name">ช้อปปิ้ง</span></div>
+                <div class="pcat-item"><span class="pcat-icon">💡</span><span class="pcat-name">ค่าน้ำไฟ</span></div>
+                <div class="pcat-item"><span class="pcat-icon">🏠</span><span class="pcat-name">ที่พัก</span></div>
+                <div class="pcat-item"><span class="pcat-icon">🎬</span><span class="pcat-name">บันเทิง</span></div>
+                <div class="pcat-item"><span class="pcat-icon">💊</span><span class="pcat-name">สุขภาพ</span></div>
+                <div class="pcat-item"><span class="pcat-icon">✨</span><span class="pcat-name">อื่นๆ</span></div>
+              </div>
+
+              <!-- Donut breakdown teaser -->
+              <div class="pillar-budget-summary">
+                <div class="p-budget-row">
+                  <span class="p-budget-lbl">หมวดใช้จ่ายสูงสุด:</span>
+                  <strong class="p-budget-val" id="pillarTopCat">ยังไม่มีข้อมูล</strong>
+                </div>
+                <div class="p-budget-bar-bg">
+                  <div class="p-budget-bar-fill" id="pillarTopCatBar" style="width: 0%"></div>
+                </div>
+                <button type="button" class="btn btn-ghost btn-sm btn-block" onclick="document.getElementById('txTitle').focus()">
+                  + บันทึกรายการใหม่ทันที
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Pillar 3: รู้สถานะการเงิน -->
+        <div class="pillar-card">
+          <div class="pillar-card-header">
+            <span class="pillar-step-badge">3</span>
+            <div>
+              <h3 class="pillar-title">รู้สถานะการเงิน</h3>
+              <p class="pillar-subtitle">บันทึกสินทรัพย์ และหนี้สิน ติดตามการเปลี่ยนแปลงในแต่ละช่วงเวลา</p>
+            </div>
+          </div>
+
+          <div class="phone-mockup">
+            <div class="phone-screen">
+              <div class="phone-screen-header">
+                <span>สินทรัพย์ - หนี้สิน</span>
+                <span class="phone-header-date">ความมั่งคั่ง</span>
+              </div>
+
+              <!-- Dark Navy Net Worth Card -->
+              <div class="phone-dark-card">
+                <div class="phone-dark-label">ความมั่งคั่งสุทธิ (Net Worth)</div>
+                <div class="phone-dark-val text-cyan" id="pillarNetWorth">฿0.00</div>
+                <div class="phone-dark-subgrid">
+                  <div>
+                    <span class="phone-sub-lbl">สินทรัพย์รวม</span>
+                    <strong class="phone-sub-val" id="pillarAssets">฿0.00</strong>
+                  </div>
+                  <div class="divider-v"></div>
+                  <div>
+                    <span class="phone-sub-lbl">หนี้สินรวม</span>
+                    <strong class="phone-sub-val text-expense" id="pillarLiabilities">฿0.00</strong>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Comparative Bar Chart -->
+              <div class="bar-chart-container">
+                <div class="bar-chart-bars">
+                  <div class="bar-col">
+                    <span class="bar-val-lbl" id="barAssetVal">0</span>
+                    <div class="bar-track">
+                      <div class="bar-fill bar-asset" id="barAssetFill" style="height: 60%"></div>
+                    </div>
+                    <span class="bar-name">สินทรัพย์</span>
+                  </div>
+
+                  <div class="bar-col">
+                    <span class="bar-val-lbl" id="barLiabVal">0</span>
+                    <div class="bar-track">
+                      <div class="bar-fill bar-liability" id="barLiabFill" style="height: 35%"></div>
+                    </div>
+                    <span class="bar-name">หนี้สิน</span>
+                  </div>
+
+                  <div class="bar-col">
+                    <span class="bar-val-lbl" id="barNetVal">0</span>
+                    <div class="bar-track">
+                      <div class="bar-fill bar-net" id="barNetFill" style="height: 45%"></div>
+                    </div>
+                    <span class="bar-name">มั่งคั่งสุทธิ</span>
+                  </div>
+                </div>
+
+                <button type="button" id="btnEditNetWorthPillar" class="btn btn-outline btn-sm btn-block">
+                  ✏️ อัปเดตสินทรัพย์ / หนี้สิน
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Pillar 4: วิเคราะห์สุขภาพการเงิน -->
+        <div class="pillar-card">
+          <div class="pillar-card-header">
+            <span class="pillar-step-badge">4</span>
+            <div>
+              <h3 class="pillar-title">วิเคราะห์สุขภาพการเงิน</h3>
+              <p class="pillar-subtitle">ค้นหาจุดแข็งและจุดอ่อนทางการเงิน พร้อมคำแนะนำเพื่อวางแผนด้านต่างๆ</p>
+            </div>
+          </div>
+
+          <div class="phone-mockup">
+            <div class="phone-screen">
+              <div class="phone-screen-header">
+                <span>วิเคราะห์สุขภาพ</span>
+                <span class="phone-header-date">Smart AI</span>
+              </div>
+
+              <!-- Speedometer / Semi-Circle Gauge SVG -->
+              <div class="speedometer-container">
+                <div class="speedometer-wrap">
+                  <svg class="speedometer-svg" viewBox="0 0 200 115">
+                    <!-- Gauge Arc Segments: Red -> Orange -> Yellow -> Green -->
+                    <path d="M 20 100 A 80 80 0 0 1 55 35" fill="none" stroke="#ef4444" stroke-width="14" stroke-linecap="round" />
+                    <path d="M 55 35 A 80 80 0 0 1 100 20" fill="none" stroke="#f97316" stroke-width="14" />
+                    <path d="M 100 20 A 80 80 0 0 1 145 35" fill="none" stroke="#eab308" stroke-width="14" />
+                    <path d="M 145 35 A 80 80 0 0 1 180 100" fill="none" stroke="#10b981" stroke-width="14" stroke-linecap="round" />
+                    
+                    <!-- Needle -->
+                    <g id="healthNeedleGroup" transform="rotate(-30 100 100)" class="needle-group">
+                      <line x1="100" y1="100" x2="100" y2="35" stroke="#0f172a" stroke-width="4" stroke-linecap="round" />
+                      <circle cx="100" cy="100" r="8" fill="#1e3a8a" />
+                      <circle cx="100" cy="100" r="4" fill="#38bdf8" />
+                    </g>
+                  </svg>
+                </div>
+
+                <div class="health-score-display">
+                  <div class="health-score-main">
+                    <span class="health-status-badge" id="pillarHealthRating">ปานกลาง</span>
+                    <div class="health-numeric">
+                      <strong id="pillarHealthScore">6.0</strong>
+                      <span class="health-max">/ 10</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="health-advice-card">
+                  <div class="advice-header">💡 คำแนะนำเพื่อความมั่นคง:</div>
+                  <p class="advice-text" id="pillarHealthAdvice">
+                    บันทึกรายรับ-รายจ่ายอย่างสม่ำเสมอ เพื่อให้ระบบคำนวณอัตราส่วนการออมและสุขภาพการเงินที่แม่นยำ
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- Main Interactive Workspace -->
+  <main class="container main-layout">
+    
+    <!-- Summary Cards (Standard Overview Strip) -->
+    <section class="summary-grid" aria-label="สรุปยอดเงิน">
+      <div class="summary-card balance-card">
+        <div class="summary-icon">💎</div>
+        <div class="summary-info">
+          <span class="summary-label">ยอดคงเหลือสุทธิ</span>
+          <strong id="sumBalance" class="summary-value">฿0.00</strong>
+          <span id="sumTxCount" class="summary-sub">0 รายการในเดือนนี้</span>
+        </div>
+      </div>
+
+      <div class="summary-card income-card">
+        <div class="summary-icon">📈</div>
+        <div class="summary-info">
+          <span class="summary-label">รายรับรวม</span>
+          <strong id="sumIncome" class="summary-value text-income">+฿0.00</strong>
+          <span class="summary-sub">เงินเดือน และรายได้เสริม</span>
+        </div>
+      </div>
+
+      <div class="summary-card expense-card">
+        <div class="summary-icon">📉</div>
+        <div class="summary-info">
+          <span class="summary-label">รายจ่ายรวม</span>
+          <strong id="sumExpense" class="summary-value text-expense">-฿0.00</strong>
+          <span id="topCategoryHint" class="summary-sub">แยกตามหมวดหมู่อัตโนมัติ</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Workspace Grid -->
+    <div class="workspace-grid">
+      <!-- Left Column: Slip Uploader & Smart Form -->
+      <section class="panel form-panel">
+        <div class="panel-header">
+          <div>
+            <h2 class="panel-title">📸 แนบสลิป / บันทึกรายการ</h2>
+            <p class="panel-desc">อัปโหลดสลิปธนาคาร ระบบจะอ่านยอดเงินและจัดหมวดหมู่ให้อัตโนมัติ</p>
+          </div>
+          <span id="ocrModeBadge" class="badge badge-ocr">OCR ภาษาไทย + AI</span>
+        </div>
+
+        <!-- Drag & Drop Slip Zone -->
+        <div id="dropZone" class="slip-dropzone">
+          <input type="file" id="slipInput" accept="image/*" hidden />
+          <div id="dropZonePrompt" class="dropzone-prompt">
+            <div class="dropzone-icon">📲</div>
+            <p class="dropzone-title">คลิกเพื่อเลือกรูปสลิป หรือลากไฟล์มาวางที่นี่</p>
+            <p class="dropzone-hint">รองรับสลิปทุกธนาคาร (K PLUS, SCB, Krungthai, BBL, TrueMoney ฯลฯ)</p>
+            <button type="button" id="btnBrowseSlip" class="btn btn-primary btn-sm">
+              เลือกรูปสลิปจากเครื่อง
+            </button>
+          </div>
+
+          <!-- Active Slip Preview & Detection Result -->
+          <div id="slipPreviewArea" class="slip-preview-area hidden">
+            <div class="slip-preview-thumb-wrap">
+              <img id="slipPreviewImg" src="" alt="ตัวอย่างสลิป" class="slip-preview-img" />
+              <button type="button" id="btnRemoveSlip" class="btn-remove-slip" title="ลบรูปสลิป">✕</button>
+            </div>
+
+            <div class="slip-detection-box">
+              <div id="ocrProgressWrap" class="ocr-progress-wrap hidden">
+                <div class="spinner"></div>
+                <div>
+                  <strong id="ocrStatusText">กำลังสแกนข้อความจากสลิป...</strong>
+                  <div class="progress-bar">
+                    <div id="ocrProgressBar" class="progress-fill" style="width: 15%"></div>
+                  </div>
+                </div>
+              </div>
+
+              <div id="detectedCategoryCard" class="detected-category-card hidden">
+                <span class="detected-label">✨ ตรวจพบเป็นค่าใช้จ่ายหมวด:</span>
+                <div class="detected-main">
+                  <span id="detectedCatIcon" class="detected-icon">🍜</span>
+                  <div>
+                    <strong id="detectedCatName" class="detected-name">อาหารและเครื่องดื่ม</strong>
+                    <p id="detectedReason" class="detected-reason">ตรงกับคำว่า "CAFE AMAZON"</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Quick Demo Slip Generator for instant testing -->
+        <div class="sample-slips-bar">
+          <span class="sample-label">⚡ ทดสอบสแกนสลิปตัวอย่างทันที:</span>
+          <div class="sample-chips">
+            <button type="button" class="chip-btn" data-sample="amazon">☕ Cafe Amazon</button>
+            <button type="button" class="chip-btn" data-sample="seven">🏪 7-Eleven</button>
+            <button type="button" class="chip-btn" data-sample="pea">💡 ค่าไฟ PEA</button>
+            <button type="button" class="chip-btn" data-sample="ptt">⛽ น้ำมัน PTT</button>
+            <button type="button" class="chip-btn" data-sample="shopee">🛍️ Shopee</button>
+            <button type="button" class="chip-btn" data-sample="salary">💰 เงินเดือนเข้า</button>
+          </div>
+        </div>
+
+        <!-- Transaction Form -->
+        <form id="txForm" class="tx-form">
+          <input type="hidden" id="txExistingSlipUrl" value="" />
+          <input type="hidden" id="txOcrText" value="" />
+          <input type="hidden" id="txMatchedKeyword" value="" />
+          <input type="hidden" id="txRefNo" value="" />
+
+          <!-- Type Switcher -->
+          <div class="type-toggle" role="radiogroup" aria-label="ประเภทรายการ">
+            <button type="button" id="btnTypeExpense" class="type-btn active-expense" data-type="expense">
+              💸 รายจ่าย
+            </button>
+            <button type="button" id="btnTypeIncome" class="type-btn" data-type="income">
+              💰 รายรับ
+            </button>
+          </div>
+
+          <div class="form-row two-cols">
+            <div class="form-group">
+              <label for="txAmount">จำนวนเงิน (บาท) <span class="req">*</span></label>
+              <input type="number" id="txAmount" step="0.01" min="0.01" placeholder="0.00" required class="input-lg" />
+            </div>
+
+            <div class="form-group">
+              <label for="txDate">วันที่รายการ</label>
+              <div class="date-time-group">
+                <input type="date" id="txDate" required />
+                <input type="time" id="txTime" />
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="txTitle">ชื่อรายการ / ร้านค้าจากสลิป <span class="req">*</span></label>
+            <input type="text" id="txTitle" placeholder="เช่น กาแฟอเมซอน, เซเว่น, ค่าไฟ (พิมพ์เพื่อเดาหมวดหมู่อัตโนมัติ)" required />
+          </div>
+
+          <!-- Visual Category Selector -->
+          <div class="form-group">
+            <div class="label-row">
+              <label>หมวดหมู่ (ระบบเลือกให้อัตโนมัติ หรือคลิกเปลี่ยนได้)</label>
+              <span id="autoMatchBadge" class="auto-match-badge hidden">จัดหมวดอัตโนมัติ</span>
+            </div>
+            <div id="categorySelectorGrid" class="category-selector-grid"></div>
+          </div>
+
+          <div class="form-row two-cols">
+            <div class="form-group">
+              <label for="txMerchant">ผู้รับโอน / ชื่อร้านในสลิป</label>
+              <input type="text" id="txMerchant" placeholder="เช่น บจก. ซีพี ออลล์" />
+            </div>
+            <div class="form-group">
+              <label for="txNote">บันทึกเพิ่มเติม</label>
+              <input type="text" id="txNote" placeholder="มื้อเที่ยง, หารกับเพื่อน..." />
+            </div>
+          </div>
+
+          <label class="checkbox-learn">
+            <input type="checkbox" id="chkLearnKeyword" checked />
+            <span>จำชื่อร้านนี้ไว้จัดหมวดหมู่อัตโนมัติในครั้งถัดไป</span>
+          </label>
+
+          <div class="form-actions">
+            <button type="submit" id="btnSubmitTx" class="btn btn-primary btn-block btn-lg">
+              ✅ บันทึกรายการ
+            </button>
+          </div>
+        </form>
+      </section>
+
+      <!-- Right Column: Category Breakdown & Transaction History -->
+      <div class="right-column">
+        <!-- Category Breakdown Card -->
+        <section class="panel breakdown-panel">
+          <div class="panel-header">
+            <div>
+              <h2 class="panel-title">📊 สรุปค่าใช้จ่ายแยกตามหมวดหมู่</h2>
+              <p class="panel-desc">คลิกที่หมวดหมู่เพื่อดูเฉพาะสลิปในหมวดนั้น</p>
+            </div>
+            <button type="button" id="btnResetCatFilter" class="btn btn-ghost btn-sm hidden">
+              ดูทุกหมวดหมู่
+            </button>
+          </div>
+
+          <div class="breakdown-content">
+            <div class="donut-wrap">
+              <svg id="categoryDonutSvg" viewBox="0 0 160 160" class="donut-svg"></svg>
+              <div class="donut-center">
+                <span class="donut-center-label">รายจ่ายรวม</span>
+                <strong id="donutCenterTotal">฿0</strong>
+              </div>
+            </div>
+            <div id="categoryBreakdownList" class="category-breakdown-list"></div>
+          </div>
+        </section>
+
+        <!-- Transactions List Card -->
+        <section class="panel history-panel">
+          <div class="panel-header history-header">
+            <div>
+              <h2 class="panel-title">🧾 รายการและสลิปที่บันทึกไว้</h2>
+            </div>
+
+            <div class="filter-bar">
+              <input type="search" id="searchInput" placeholder="🔍 ค้นหาชื่อร้าน, บันทึก, สลิป..." class="search-input" />
+              <select id="typeFilter" class="filter-select">
+                <option value="all">ทุกประเภท</option>
+                <option value="expense">เฉพาะรายจ่าย</option>
+                <option value="income">เฉพาะรายรับ</option>
+              </select>
+              <select id="categoryFilter" class="filter-select">
+                <option value="all">ทุกหมวดหมู่</option>
+              </select>
+            </div>
+          </div>
+
+          <div id="transactionList" class="transaction-list"></div>
+        </section>
+      </div>
+    </div>
+  </main>
+
+  <!-- Modal 1: Slip Lightbox & OCR Inspector -->
+  <div id="slipModal" class="modal-backdrop hidden" role="dialog" aria-modal="true">
+    <div class="modal-card slip-modal-card">
+      <div class="modal-header">
+        <h3 id="slipModalTitle">รายละเอียดสลิปและหมวดหมู่</h3>
+        <button type="button" id="btnCloseSlipModal" class="btn-close">✕</button>
+      </div>
+      <div class="modal-body slip-modal-body">
+        <div class="slip-modal-image-col">
+          <img id="slipModalImg" src="" alt="รูปสลิป" class="slip-modal-img" />
+        </div>
+        <div class="slip-modal-info-col">
+          <div id="slipModalCategoryBadge" class="slip-modal-cat-badge"></div>
+          <div class="slip-detail-list">
+            <div class="detail-item">
+              <span>จำนวนเงิน</span>
+              <strong id="slipModalAmount">฿0.00</strong>
+            </div>
+            <div class="detail-item">
+              <span>ผู้รับโอน / ร้านค้า</span>
+              <strong id="slipModalMerchant">-</strong>
+            </div>
+            <div class="detail-item">
+              <span>วัน-เวลา</span>
+              <strong id="slipModalDateTime">-</strong>
+            </div>
+            <div class="detail-item">
+              <span>คำที่ใช้แยกหมวดหมู่</span>
+              <strong id="slipModalKeyword">-</strong>
+            </div>
+            <div class="detail-item">
+              <span>เลขที่อ้างอิง</span>
+              <strong id="slipModalRef">-</strong>
+            </div>
+          </div>
+          <div class="ocr-raw-box">
+            <label>ข้อความที่อ่านได้จากสลิป (OCR):</label>
+            <pre id="slipModalOcrText"></pre>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal 2: Settings (Custom Keywords & Gemini AI Key) -->
+  <div id="settingsModal" class="modal-backdrop hidden" role="dialog" aria-modal="true">
+    <div class="modal-card settings-modal-card">
+      <div class="modal-header">
+        <h3>⚙️ ตั้งค่าการแยกหมวดหมู่อัตโนมัติ & AI</h3>
+        <button type="button" id="btnCloseSettingsModal" class="btn-close">✕</button>
+      </div>
+      <div class="modal-body">
+        <!-- Gemini Vision API Key Setting -->
+        <div class="settings-section">
+          <h4>🤖 เชื่อมต่อ Gemini AI อ่านสลิปอัจฉริยะ (ตัวเลือกเสริม)</h4>
+          <p class="settings-desc">
+            ค่าเริ่มต้นแอปจะใช้ <strong>Tesseract OCR บนเครื่องฟรี 100%</strong> หากคุณใส่ Gemini API Key เพิ่ม ระบบจะสามารถใช้ Gemini Vision อ่านสลิปที่ยับหรือฟอนต์ซับซ้อนได้แม่นยำยิ่งขึ้น
+          </p>
+          <div class="api-key-row">
+            <input type="password" id="geminiKeyInput" placeholder="วาง Gemini API Key (AIzaSy...)" />
+            <button type="button" id="btnSaveApiKey" class="btn btn-primary">บันทึก Key</button>
+          </div>
+          <p id="apiKeyStatusText" class="api-key-status"></p>
+        </div>
+
+        <hr class="divider" />
+
+        <!-- Category Keyword Rules -->
+        <div class="settings-section">
+          <h4>🏷️ คำสำคัญ (Keywords) สำหรับแยกหมวดหมู่จากสลิป</h4>
+          <p class="settings-desc">
+            เมื่อสแกนสลิปเจอคำเหล่านี้ในชื่อร้านหรือบันทึกช่วยจำ ระบบจะจัดเข้าหมวดหมู่นั้นทันที คุณสามารถเพิ่มชื่อร้านประจำของคุณได้เลย
+          </p>
+          <div class="keyword-adder-row">
+            <select id="ruleCategorySelect"></select>
+            <input type="text" id="newKeywordInput" placeholder="พิมพ์ชื่อร้าน เช่น ตี๋น้อย, โลตัส, ค่าหอ..." />
+            <button type="button" id="btnAddKeyword" class="btn btn-primary">+ เพิ่มคำค้นหา</button>
+          </div>
+          <div id="categoryKeywordsContainer" class="category-keywords-container"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal 3: Net Worth (Assets & Liabilities) Editor -->
+  <div id="netWorthModal" class="modal-backdrop hidden" role="dialog" aria-modal="true">
+    <div class="modal-card settings-modal-card">
+      <div class="modal-header">
+        <h3>🏛️ จัดการสถานะการเงิน (สินทรัพย์ & หนี้สิน)</h3>
+        <button type="button" id="btnCloseNetWorthModal" class="btn-close">✕</button>
+      </div>
+      <div class="modal-body">
+        <p class="settings-desc">
+          กรอกมูลค่าสินทรัพย์และหนี้สินทั้งหมดของคุณ เพื่อคำนวณ <strong>ความมั่งคั่งสุทธิ (Net Worth)</strong> และวิเคราะห์สุขภาพทางการเงิน
+        </p>
+
+        <form id="netWorthForm" class="tx-form">
+          <div class="form-group">
+            <label for="nwAssetsInput">💰 สินทรัพย์รวม (บาท)</label>
+            <input type="number" id="nwAssetsInput" step="100" min="0" placeholder="เช่น 568,000 (เงินฝาก, กองทุน, สลาก, หุ้น, ทรัพย์สิน)" class="input-lg" />
+            <span class="form-hint">เช่น เงินฝากธนาคาร กองทุนรวม ทองคำ รถยนต์ บ้าน</span>
+          </div>
+
+          <div class="form-group">
+            <label for="nwLiabilitiesInput">💳 หนี้สินรวม (บาท)</label>
+            <input type="number" id="nwLiabilitiesInput" step="100" min="0" placeholder="เช่น 350,000 (หนี้บัตร, สินเชื่อ, ผ่อนรถ, กู้บ้าน)" class="input-lg" />
+            <span class="form-hint">เช่น ยอดค้างชำระบัตรเครดิต หนี้ผ่อนบ้าน ผ่อนรถ หรือสินเชื่อส่วนบุคคล</span>
+          </div>
+
+          <div class="net-worth-preview-box">
+            <span>ความมั่งคั่งสุทธิที่จะคำนวณได้:</span>
+            <strong id="nwPreviewCalc" class="text-cyan">฿0.00</strong>
+          </div>
+
+          <div class="form-actions">
+            <button type="submit" class="btn btn-primary btn-block btn-lg">
+              💾 บันทึกสถานะการเงิน
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div id="toastContainer" class="toast-container"></div>
+
+  <script src="/app.js"></script>
+</body>
+</html>
