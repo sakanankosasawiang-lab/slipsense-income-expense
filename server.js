@@ -516,7 +516,11 @@ async function seedDemoTransactionsIfEmpty(force = false) {
   }
 }
 
-seedDemoTransactionsIfEmpty(false);
+// Only auto-seed demo data for local/offline mode. With a Cloud DB this would re-insert
+// demo rows on every cold start after the user deletes everything.
+if (!db.isCloud) {
+  seedDemoTransactionsIfEmpty(false);
+}
 
 app.post('/api/demo/seed', async (_req, res) => {
   try {

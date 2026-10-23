@@ -158,10 +158,16 @@ const DEFAULT_CATEGORIES = [
 let pgPool = null;
 if (databaseUrl) {
   try {
+    // Remove sslmode/supa params from URL: in recent pg versions "sslmode=require" overrides
+    // the ssl option below and enforces full cert verification, which fails with Supabase's
+    // certificate chain ("self-signed certificate in certificate chain").
+    const cleanUrl = new URL(databaseUrl);
+    ['sslmode', 'sslrootcert', 'sslcert', 'sslkey', 'supa', 'pgbouncer'].forEach(p => cleanUrl.searchParams.delete(p));
+
     pgPool = new Pool({
-      connectionString: databaseUrl,
+      connectionString: cleanUrl.toString(),
       ssl: { rejectUnauthorized: false },
-      max: 10,
+      max: 5,
       idleTimeoutMillis: 30000
     });
   } catch (err) {
@@ -218,10 +224,19 @@ function saveJsonState(state) {
 let jsonState = (!pgPool && !localDb) ? loadJsonState() : null;
 
 // Initialization: Tables & default categories
-let isInitialized = false;
-async function initDb() {
-  if (isInitialized) return;
+// Memoize the init promise so concurrent requests don't race on CREATE TABLE / seeding.
+let initPromise = null;
+function initDb() {
+  if (!initPromise) {
+    initPromise = doInitDb().catch(err => {
+      initPromise = null; // allow retry on next request
+      throw err;
+    });
+  }
+  return initPromise;
+}
 
+async function doInitDb() {
   if (pgPool) {
     // PostgreSQL / Supabase
     const client = await pgPool.connect();
@@ -263,7 +278,7 @@ async function initDb() {
       if (parseInt(res.rows[0].count, 10) === 0) {
         for (const cat of DEFAULT_CATEGORIES) {
           await client.query(
-            'INSERT INTO categories (id, name, type, icon, color, keywords) VALUES ($1, $2, $3, $4, $5, $6)',
+            'INSERT INTO categories (id, name, type, icon, color, keywords) VALUES ($1, $2, $3, $4, $5, $6) ON CONFLICT (id) DO NOTHING',
             [cat.id, cat.name, cat.type, cat.icon, cat.color, JSON.stringify(cat.keywords)]
           );
         }
@@ -318,8 +333,6 @@ async function initDb() {
       }
     }
   }
-
-  isInitialized = true;
 }
 
 // Universal Database Adapter
