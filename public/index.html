@@ -36,6 +36,9 @@
       </div>
 
       <div class="topbar-actions">
+        <!-- DB Sync Status Badge -->
+        <span id="dbStatusBadge" class="badge badge-db-status" title="สถานะการเชื่อมต่อฐานข้อมูล">🔄 กำลังตรวจสอบ...</span>
+
         <!-- Month Filter -->
         <div class="month-picker-wrap">
           <label for="monthFilter" class="sr-only">เลือกเดือน</label>
@@ -603,6 +606,29 @@
         <button type="button" id="btnCloseSettingsModal" class="btn-close">✕</button>
       </div>
       <div class="modal-body">
+        <!-- Cloud Database Sync Status & Guide -->
+        <div class="settings-section">
+          <h4>☁️ ฐานข้อมูลกลาง (Cloud Database สำหรับซิงค์มือถือ & คอมพิวเตอร์)</h4>
+          <div id="dbModalStatusBox" class="db-modal-status-box">
+            <span id="dbModalStatusIcon">⏳</span>
+            <div>
+              <strong id="dbModalStatusTitle">กำลังตรวจสอบการเชื่อมต่อ...</strong>
+              <p id="dbModalStatusDesc">หากต้องการให้ข้อมูลในมือถือและคอมพิวเตอร์เป็นอันเดียวกันตลอดเวลา แนะนำให้เชื่อมต่อ Cloud Database (ฟรี เช่น Supabase / Neon)</p>
+            </div>
+          </div>
+          <div class="cloud-db-instructions">
+            <p><strong>วิธีเชื่อมต่อ Cloud Database ฟรีใน 1 นาที (Supabase / Neon):</strong></p>
+            <ol style="margin-left: 20px; font-size: 13px; color: var(--text-muted); line-height: 1.6;">
+              <li>สมัครหรือเข้าสู่ระบบที่ <strong>Supabase.com</strong> หรือ <strong>Neon.tech</strong> (ฟรี)</li>
+              <li>สร้างโปรเจกต์ใหม่ แล้วคัดลอก <strong>Connection String (URI)</strong></li>
+              <li>นำไปใส่ใน Vercel: เมนู <strong>Settings &gt; Environment Variables</strong> ตั้งชื่อตัวแปรว่า <code>DATABASE_URL</code></li>
+              <li>กด <strong>Redeploy</strong> — ระบบจะซิงค์ข้อมูลตรงกัน 100% ทุกเครื่องทันที!</li>
+            </ol>
+          </div>
+        </div>
+
+        <hr class="divider" />
+
         <!-- Gemini Vision API Key Setting -->
         <div class="settings-section">
           <h4>🤖 เชื่อมต่อ Gemini AI อ่านสลิปอัจฉริยะ (ตัวเลือกเสริม)</h4>

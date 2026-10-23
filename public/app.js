@@ -149,6 +149,7 @@ async function loadCategoriesAndSettings() {
   state.categories = await catRes.json();
   const settings = await setRes.json();
   state.hasGeminiKey = settings.hasGeminiKey;
+  updateDbStatusBadge(settings.isCloudDb);
 
   const ocrBadge = document.getElementById('ocrModeBadge');
   if (state.hasGeminiKey) {
@@ -160,6 +161,45 @@ async function loadCategoriesAndSettings() {
   renderCategorySelector();
   populateCategoryFilters();
   renderSettingsKeywords();
+}
+
+function updateDbStatusBadge(isCloud) {
+  state.isCloudDb = Boolean(isCloud);
+  const badge = document.getElementById('dbStatusBadge');
+  const box = document.getElementById('dbModalStatusBox');
+  const icon = document.getElementById('dbModalStatusIcon');
+  const title = document.getElementById('dbModalStatusTitle');
+  const desc = document.getElementById('dbModalStatusDesc');
+
+  if (!badge) return;
+
+  if (isCloud) {
+    badge.className = 'badge badge-db-status db-connected';
+    badge.innerHTML = '☁️ ซิงค์ Cloud DB แล้ว';
+    badge.title = 'ฐานข้อมูลกลางเชื่อมต่อแล้ว ข้อมูลตรงกันทุกเครื่อง';
+    badge.onclick = () => {
+      document.getElementById('settingsModal').classList.remove('hidden');
+    };
+    if (box) {
+      box.className = 'db-modal-status-box db-connected-box';
+      if (icon) icon.textContent = '✅';
+      if (title) title.textContent = 'เชื่อมต่อ Cloud Database สำเร็จแล้ว';
+      if (desc) desc.textContent = 'ข้อมูลจะซิงค์ตรงกันทันที 100% ทุกอุปกรณ์ (ทั้งบนมือถือและคอมพิวเตอร์)';
+    }
+  } else {
+    badge.className = 'badge badge-db-status db-offline';
+    badge.innerHTML = '⚠️ ยังไม่ซิงค์ข้ามเครื่อง (คลิกดูวิธี)';
+    badge.title = 'คลิกเพื่อดูวิธีเชื่อมต่อ Cloud Database ฟรีสำหรับซิงค์มือถือและคอม';
+    badge.onclick = () => {
+      document.getElementById('settingsModal').classList.remove('hidden');
+    };
+    if (box) {
+      box.className = 'db-modal-status-box db-offline-box';
+      if (icon) icon.textContent = '⚠️';
+      if (title) title.textContent = 'ยังไม่ได้เชื่อมต่อ Cloud Database';
+      if (desc) desc.textContent = 'ขณะนี้แอปทำงานในโหมดเครื่องเดี่ยว หากต้องการให้ข้อมูลในมือถือและคอมพิวเตอร์เป็นอันเดียวกันตลอดเวลา กรุณาใส่ DATABASE_URL ใน Vercel';
+    }
+  }
 }
 
 // Render Visual Category Grid in Form
@@ -227,6 +267,9 @@ async function loadTransactions() {
   const data = await res.json();
 
   state.transactions = data.transactions || [];
+  if (data.isCloudDb !== undefined) {
+    updateDbStatusBadge(data.isCloudDb);
+  }
   state.summary = data.summary || {
     totalIncome: 0,
     totalExpense: 0,
